@@ -1,0 +1,260 @@
+.book-card {
+  background-color: white;
+  border-radius: 6px;
+  padding: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.book-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.book-card .book-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.book-card .book-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.book-card .book-emoji {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+}
+
+.book-card .out-of-stock {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  background: rgba(220, 38, 38, 0.9);
+  color: white;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-size: 7px;
+  font-weight: 500;
+}
+
+.book-card .discount-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 1px 3px;
+  border-radius: 2px;
+  font-size: 7px;
+  font-weight: 600;
+}
+
+/* 收藏按钮样式 */
+.book-card .favorite-btn {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.book-card .favorite-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+}
+
+.book-card .favorite-btn.favorited {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.book-card .favorite-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.book-card .book-info {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 70px;
+}
+
+.book-card .book-title {
+  font-size: 9px !important;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 3px 0;
+  line-height: 1.2;
+  height: 22px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-card .book-author {
+  font-size: 7px !important;
+  color: #666;
+  margin: 0 0 3px 0;
+  height: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-card .book-type {
+  font-size: 6px !important;
+  color: #999;
+  margin: 0 0 3px 0;
+  background: #f3f4f6;
+  padding: 1px 2px;
+  border-radius: 3px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.book-card .book-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  height: 12px;
+}
+
+.book-card .price-info {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.book-card .current-price {
+  font-size: 10px !important;
+  font-weight: 600;
+  color: #f5222d;
+}
+
+.book-card .original-price {
+  font-size: 7px !important;
+  color: #999;
+  text-decoration: line-through;
+}
+
+.book-card .book-stock {
+  font-size: 7px !important;
+  font-weight: 500;
+  color: #666;
+}
+
+.book-card .in-stock {
+  color: #52c41a;
+}
+
+.book-card .out-of-stock-text {
+  color: #f5222d;
+}
+
+.book-card .add-to-cart-btn {
+  width: 100%;
+  padding: 3px 6px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 8px !important;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.book-card .add-to-cart-btn:hover:not(.disabled) {
+  background-color: #40a9ff;
+}
+
+.book-card .add-to-cart-btn.disabled {
+  background-color: #f0f0f0;
+  color: #bfbfbf;
+  cursor: not-allowed;
+}
+
+/* 购物车动画效果 */
+.book-card .add-to-cart-btn.animate {
+  animation: cartShake 0.6s ease-in-out;
+}
+
+@keyframes cartShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .book-card {
+    padding: 5px;
+  }
+  
+  .book-card .book-image {
+    aspect-ratio: 3/2;
+  }
+  
+  .book-card .book-title {
+    font-size: 8px !important;
+    height: 20px;
+  }
+  
+  .book-card .book-author {
+    font-size: 6px !important;
+  }
+  
+  .book-card .current-price {
+    font-size: 9px !important;
+  }
+  
+  .book-card .add-to-cart-btn {
+    padding: 2px 5px;
+    font-size: 7px !important;
+  }
+  
+  .book-card .favorite-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+} 
