@@ -34,7 +34,7 @@ func InitRouter() *gin.Engine {
 	favoriteDAO := repository.NewFavoriteDAO()
 	favoriteService := service.NewFavoriteService(favoriteDAO)
 	favoriteController := controller.NewFavoriteController(favoriteService)
-
+	orderController := controller.NewOrderController()
 	v1 := r.Group("/api/v1")
 	{
 		user := v1.Group("/user")
@@ -66,10 +66,18 @@ func InitRouter() *gin.Engine {
 		{
 			favorite.POST("/:id", favoriteController.AddFavorite)
 			favorite.DELETE("/:id", favoriteController.RemoveFavorite)
-			favorite.GET("/list",favoriteController.GetUserFavorites)
-			favorite.GET("/count",favoriteController.GetUserFavoriteCount)
-			favorite.GET("/:id/check",favoriteController.CheckFavorite)
+			favorite.GET("/list", favoriteController.GetUserFavorites)
+			favorite.GET("/count", favoriteController.GetUserFavoriteCount)
+			favorite.GET("/:id/check", favoriteController.CheckFavorite)
 		}
+		order := v1.Group("/order")
+		order.Use(middleware.JWTAuthMiddleware())
+		{
+			order.POST("/create",orderController.CreateOrder)
+			order.GET("/list",orderController.GetUserOrders)
+			order.POST("/:id/pay",orderController.PayOrder)
+		}
+
 	}
 
 	captcha := v1.Group("/captcha")

@@ -7,7 +7,6 @@ import (
 
 type BookService struct {
 	BookDB *repository.BookDAO
-	//TODO:类别DAO
 }
 
 func NewBookService() *BookService {

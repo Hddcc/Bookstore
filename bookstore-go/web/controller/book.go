@@ -120,7 +120,6 @@ func (b *BookController) Searchbooks(ctx *gin.Context) {
 }
 
 // 获取图书细节
-
 func (b *BookController) GetBookDetail(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
