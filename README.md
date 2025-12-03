@@ -114,3 +114,8 @@
     ├── middleware/     # 中间件 (如 JWT 认证)
     └── router/         # API 路由配置
 ```
+
+## 项目展示
+![主页](bookstore-admin-fronted/show_main.png)
+![书籍详情](bookstore-admin-fronted/show_book.png)
+![购物车](bookstore-admin-fronted/show_pay.png)
