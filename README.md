@@ -116,6 +116,10 @@
 ```
 
 ## 项目展示
-![主页](bookstore-admin-fronted/show_main.png)
+![主页](./bookstore-admin-fronted-master/show_main.png)
 
+![书籍详情](./bookstore-admin-fronted-master/show_book.png)
+
+
+![购物车](./bookstore-admin-fronted-master/show_pay.png)
 
