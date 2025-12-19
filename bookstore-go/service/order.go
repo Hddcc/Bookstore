@@ -2,7 +2,9 @@ package service
 
 import (
 	"bookstore-manager/model"
+	"bookstore-manager/mq"
 	"bookstore-manager/repository"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -31,7 +33,14 @@ type OrderItems struct {
 	Price    int `json:"price"`
 }
 
-// 创建新订单
+type OrderMessage struct {
+	UserID     int
+	Items      []OrderItems
+	OrderNo    string
+	CreateTime int64
+}
+
+// CreateOrder 创建新订单
 func (o *OrderService) CreateOrder(req *OrderRequest) (*model.Order, error) {
 	if len(req.Items) == 0 {
 		return nil, errors.New("订单项不能为空")
@@ -69,10 +78,18 @@ func (o *OrderService) CreateOrder(req *OrderRequest) (*model.Order, error) {
 	if err != nil {
 		return nil, err
 	}
-	return order, err
+	fullOrder, err := o.OrderDB.GetOrderByID(order.ID)
+	if err != nil {
+		return nil, err // 或者降级返回 partial order
+	}
+	go func() {
+		// 使用 go 协程发送，确保不阻塞主线程返回给用户
+		mq.SendMessage("order.created", order.OrderNo)
+	}()
+	return fullOrder, err
 }
 
-// 判断库存是否充足
+// CheckStockAvailability 判断库存是否充足
 func (o *OrderService) CheckStockAvailability(req *OrderRequest) error {
 	for _, item := range req.Items {
 		book, err := o.BookDB.GetBooksByID(item.BookID)
@@ -89,19 +106,19 @@ func (o *OrderService) CheckStockAvailability(req *OrderRequest) error {
 	return nil
 }
 
-// 如果库存充足，生成订单号
+// GenerateOrderNo 如果库存充足，生成订单号
 func (o *OrderService) GenerateOrderNo() string {
 	//用时间戳标记
 	orderNo := fmt.Sprintf("ORD%d", time.Now().UnixNano())
 	return orderNo
 }
 
-// 获取用户订单列表
+// GetUserOrders 获取用户订单列表
 func (o *OrderService) GetUserOrders(userID, page, pageSize int) ([]*model.Order, int64, error) {
 	return o.OrderDB.GetUserOrders(userID, page, pageSize)
 }
 
-// 支付
+// PayOrders 支付
 func (o *OrderService) PayOrders(orderID int) error {
 	// 检查订单是否存在
 	order, _ := o.OrderDB.GetOrderByID(orderID)
@@ -120,4 +137,86 @@ func (o *OrderService) GetOrderByID(orderID int) error {
 		return err
 	}
 	return nil
+}
+
+// GetOrder 获取单个订单详情
+func (o *OrderService) GetOrder(orderID int) (*model.Order, error) {
+	return o.OrderDB.GetOrderByID(orderID)
+}
+
+// CancelOrder 取消订单
+func (o *OrderService) CancelOrder(userID, orderID int) error {
+	// 1.检查订单是否存在
+	order, err := o.OrderDB.GetOrderByID(orderID)
+	if err != nil {
+		return errors.New("订单不存在")
+	}
+	// 2.检查权限
+	if order.UserID != userID {
+		return errors.New("无权操作此订单")
+	}
+	// 3.检查状态（只有未支付的订单才可以取消）
+	if order.Status != 0 {
+		return errors.New("只有未支付的订单才可以取消")
+	}
+	return o.OrderDB.CancelOrder(orderID)
+}
+
+// CreateOrderAsync 秒杀生成订单
+func (o *OrderService) CreateOrderAsync(req *OrderRequest) (string, error) {
+	// 1.生成订单号
+	orderNo := o.GenerateOrderNo()
+
+	// 2.组装消息并发送
+	msgObj := OrderMessage{
+		UserID:     req.UserID,
+		OrderNo:    orderNo,
+		Items:      req.Items,
+		CreateTime: time.Now().Unix(),
+	}
+
+	// 序列化成JSON字符串
+	msgBytes, _ := json.Marshal(msgObj)
+
+	// 发送到rabbitmq的“order.seckill”队列
+	// RoutingKey 改成 “order.seckill”是为了和普通订单区分开
+	err := mq.SendMessage("order.seckill", string(msgBytes))
+	if err != nil {
+		return "", errors.New("系统繁忙，请稍后再试")
+	}
+
+	// 3.立即返回（但其实数据库里没有这个订单）
+	return orderNo, nil
+}
+
+// CreateOrderInDB 专门给 MQ 消费者调用
+func (o *OrderService) CreateOrderInDB(msg *OrderMessage) error {
+	// 1.重新计算总价
+	var totalAmount int
+	var orderItems []*model.OrderItem
+
+	for _, item := range msg.Items {
+		subtotal := item.Price * item.Quantity
+		totalAmount += subtotal
+
+		orderItems = append(orderItems, &model.OrderItem{
+			BookID:   item.BookID,
+			Quantity: item.Quantity,
+			Price:    item.Price,
+			Subtotal: subtotal,
+		})
+	}
+
+	// 2.组装model.Order对象
+	order := &model.Order{
+		UserID:      msg.UserID,
+		OrderNo:     msg.OrderNo,
+		TotalAmount: totalAmount,
+		Status:      0, //0 待支付
+		IsPaid:      false,
+	}
+
+	// 3.调用原有的DAO方法落库
+	// 这里面包含了：开启事务 -> 存订单 -> 存详情 -> 扣库存
+	return o.OrderDB.CreateOrderWithItems(order, orderItems)
 }

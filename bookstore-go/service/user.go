@@ -4,6 +4,7 @@ package service
 import (
 	"bookstore-manager/jwt"
 	"bookstore-manager/model"
+	"bookstore-manager/mq"
 	"bookstore-manager/repository"
 	"encoding/base64"
 	"errors"
@@ -51,6 +52,10 @@ func (u *UserService) UserRegister(username, password, phone, email string) erro
 	if err != nil {
 		return err
 	}
+	go func() {
+		// 这里可以发送用户名或者用户ID
+		mq.SendMessage("user.registered", username)
+	}()
 	return nil
 }
 
