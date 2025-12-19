@@ -30,7 +30,7 @@
 
 ## 项目演示 (UI Showcase)
 
-| 模块 | 截图 | 说明 |
+| 模块&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | 截图 | 说明 |
 | :--- | :--- | :--- |
 | **登录/注册** | <img src="./readme_png/show_login.png" width="800" /> | 用户认证入口，集成验证码防御。 |
 | **首页浏览** | <img src="./readme_png/show_main.png" width="800" /> <br> <img src="./readme_png/show_main2.png" width="800" /> | 热门图书与图书分类展示。 |
