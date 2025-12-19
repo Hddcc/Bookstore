@@ -35,6 +35,7 @@ func InitRouter() *gin.Engine {
 	favoriteService := service.NewFavoriteService(favoriteDAO)
 	favoriteController := controller.NewFavoriteController(favoriteService)
 	orderController := controller.NewOrderController()
+	categoryController := controller.NewCategoryController()
 	v1 := r.Group("/api/v1")
 	{
 		user := v1.Group("/user")
@@ -60,7 +61,14 @@ func InitRouter() *gin.Engine {
 			book.GET("/list", bookController.GetBookList)
 			book.GET("/search", bookController.Searchbooks)
 			book.GET("/detail/:id", bookController.GetBookDetail)
+			book.GET("/category/:name", bookController.GetBooksByCategory)
 		}
+
+		category := v1.Group("/category")
+		{
+			category.GET("/list", categoryController.GetCategoryList)
+		}
+
 		favorite := v1.Group("favorite")
 		favorite.Use(middleware.OptionalAuthMiddleware())
 		{
@@ -70,12 +78,15 @@ func InitRouter() *gin.Engine {
 			favorite.GET("/count", favoriteController.GetUserFavoriteCount)
 			favorite.GET("/:id/check", favoriteController.CheckFavorite)
 		}
+
 		order := v1.Group("/order")
 		order.Use(middleware.JWTAuthMiddleware())
 		{
-			order.POST("/create",orderController.CreateOrder)
-			order.GET("/list",orderController.GetUserOrders)
-			order.POST("/:id/pay",orderController.PayOrder)
+			order.POST("/create", orderController.CreateOrder)
+			order.GET("/list", orderController.GetUserOrders)
+			order.POST("/:id/pay", orderController.PayOrder)
+			order.POST("/:id/cancel", orderController.CancelOrder)
+			order.GET("/:id", orderController.GetOrderDetail)
 		}
 
 	}

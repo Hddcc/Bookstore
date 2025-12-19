@@ -18,7 +18,7 @@ func NewOrderController() *OrderController {
 	}
 }
 
-// 创建订单
+// CreateOrder 创建订单
 func (o *OrderController) CreateOrder(ctx *gin.Context) {
 	var req service.OrderRequest
 	if err := ctx.ShouldBind(&req); err != nil {
@@ -54,7 +54,7 @@ func (o *OrderController) CreateOrder(ctx *gin.Context) {
 	})
 }
 
-// 获取订单列表
+// GetUserOrders 获取订单列表
 func (o *OrderController) GetUserOrders(ctx *gin.Context) {
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("page_size", "10"))
@@ -89,7 +89,7 @@ func (o *OrderController) GetUserOrders(ctx *gin.Context) {
 	})
 }
 
-// 支付
+// PayOrder 支付
 func (o *OrderController) PayOrder(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -111,5 +111,47 @@ func (o *OrderController) PayOrder(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "支付成功",
+	})
+}
+
+// GetOrderDetail 获取订单详情接口
+func (o *OrderController) GetOrderDetail(ctx *gin.Context) {
+	idstr := ctx.Param("id")
+	orderID, _ := strconv.Atoi(idstr)
+
+	order, err := o.OrderService.GetOrder(orderID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code":    -1,
+			"message": "获取订单失败",
+		})
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    order,
+	})
+}
+
+// CancelOrder 取消订单
+func (o OrderController) CancelOrder(ctx *gin.Context) {
+	// 获取路径参数 /order/:id/cancel
+	idStr := ctx.Param("id")
+	orderID, _ := strconv.Atoi(idStr)
+
+	// 获取当前用户id
+	userID, _ := ctx.Get("userID")
+	err := o.OrderService.CancelOrder(userID.(int), orderID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"code":    0,
+		"message": "订单已取消",
 	})
 }

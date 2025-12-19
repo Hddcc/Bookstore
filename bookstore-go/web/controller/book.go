@@ -19,7 +19,7 @@ func NewBookController() *BookController {
 	}
 }
 
-// 查看热销书籍
+// GetHotBooks 查看热销书籍
 func (b *BookController) GetHotBooks(ctx *gin.Context) {
 	//根据销量Sale降序排列
 	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "5"))
@@ -39,7 +39,7 @@ func (b *BookController) GetHotBooks(ctx *gin.Context) {
 	})
 }
 
-// 新书上市
+// GetNewBooks 新书上市
 func (b *BookController) GetNewBooks(ctx *gin.Context) {
 	//根据更新时间UpdatedAt降序排列
 	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "5"))
@@ -59,7 +59,7 @@ func (b *BookController) GetNewBooks(ctx *gin.Context) {
 	})
 }
 
-// 书本翻页
+// GetBookList 书本翻页
 func (b *BookController) GetBookList(ctx *gin.Context) {
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("page_size", "12"))
@@ -85,7 +85,7 @@ func (b *BookController) GetBookList(ctx *gin.Context) {
 	})
 }
 
-// 图书搜索
+// Searchbooks 图书搜索
 func (b *BookController) Searchbooks(ctx *gin.Context) {
 	keyword := ctx.Query("q")
 	if keyword == "" {
@@ -119,7 +119,7 @@ func (b *BookController) Searchbooks(ctx *gin.Context) {
 	})
 }
 
-// 获取图书细节
+// GetBookDetail 获取图书细节
 func (b *BookController) GetBookDetail(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -141,5 +141,30 @@ func (b *BookController) GetBookDetail(ctx *gin.Context) {
 		"code":    0,
 		"message": "获取书籍信息成功",
 		"data":    book,
+	})
+}
+
+
+// GetBooksByCategory 获取分类下的书籍列表
+func (b *BookController) GetBooksByCategory(ctx *gin.Context) {
+	name := ctx.Param("name") // URL 中的 :name
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("page_size", "12"))
+
+	books, _, err := b.BookService.GetBooksByCategory(name, page, pageSize)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"code":    -1,
+			"message": "获取分类书籍失败",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	// 返回数据结构需匹配前端 expectation
+	ctx.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data":    books, // 前端直接读取 data.data 作为数组
 	})
 }
