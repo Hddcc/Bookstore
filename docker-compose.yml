@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # 1. 你的 Go 应用
+  bookstore-api:
+    build:
+      context: ./bookstore-go  # <--- 注意：这里指定去 bookstore-go 目录找 Dockerfile
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    # [新增] 自动重启：如果因为数据库还没启动好导致连接失败退出，Docker 会自动帮我们重启
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    networks:
+      - bookstore-net
+
+  # 2. RabbitMQ 服务
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: bookstore-rabbitmq
+    ports:
+      # [防冲突] 宿主机 15673 -> 容器 5672 (消息通讯)
+      - "15673:5672"
+      # [回归标准] 宿主机 15672 -> 容器 15672 (管理界面)
+      # 之前用的 25672 有些浏览器进不去，我们换回 15672
+      # 如果你本地也有 RabbitMQ 占用了这个端口，请改成 25672 或其他
+      - "25672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - bookstore-net
+
+  # 3. MySQL 服务
+  mysql:
+    image: mysql:5.7
+    container_name: bookstore-mysql
+    ports:
+      # [防冲突] 宿主机 13306 -> 容器 3306
+      - "13306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: "bookstore"
+    networks:
+      - bookstore-net
+
+  # 4. Redis 服务
+  redis:
+    image: redis:alpine
+    container_name: bookstore-redis
+    ports:
+      # [防冲突] 宿主机 16379 -> 容器 6379
+      - "16379:6379"
+    networks:
+      - bookstore-net
+
+networks:
+  bookstore-net:
+    driver: bridge
