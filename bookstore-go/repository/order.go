@@ -103,3 +103,8 @@ func (o *OrderDAO) GetOrderByID(id int) (*model.Order, error) {
 	}
 	return &order, nil
 }
+
+// CancelOrder 取消订单（状态设置为2）
+func (o *OrderDAO) CancelOrder(orderID int) error {
+	return o.db.Model(&model.Order{}).Where("id = ?", orderID).Update("status", 2).Error
+}

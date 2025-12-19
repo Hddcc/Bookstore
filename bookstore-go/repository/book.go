@@ -78,3 +78,27 @@ func (b *BookDAO) GetBooksByID(id int) (*model.Book, error) {
 	}
 	return &books, nil
 }
+
+// 根据分类名称获取书籍 (实现连表查询)
+func (b *BookDAO) GetBooksByCategory(categoryName string, page, pageSize int) ([]*model.Book, int64, error) {
+	var books []*model.Book
+	var total int64
+
+	// 连表查询：Books JOIN Categories
+	// 逻辑：找到 categories.name = categoryName 的所有 books
+	query := b.db.Debug().Model(&model.Book{}).
+		Joins("JOIN categories ON categories.id = books.category_id").
+		Where("categories.name = ? AND books.status = 1", categoryName)
+
+	err := query.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+	err = query.Offset(offset).Limit(pageSize).Find(&books).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return books, total, nil
+}
