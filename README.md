@@ -27,6 +27,18 @@
 2.  **商品模块**: 图书列表分页展示、多条件模糊搜索、详情页展示。
 3.  **交易模块**: 购物车管理、订单创建（异步）、订单状态流转。
 
+
+## 项目演示 (UI Showcase)
+
+| 模块 | 截图 | 说明 |
+| :--- | :--- | :--- |
+| **登录/注册** | <img src="./readme_png/show_login.png" width="800" /> | 用户认证入口，集成验证码防御。 |
+| **首页浏览** | <img src="./readme_png/show_main.png" width="800" /> <br> <img src="./readme_png/show_main2.png" width="800" /> | 热门图书与图书分类展示。 |
+| **图书详情** | <img src="./readme_png/show_book.png" width="800" /> | 书籍详细信息，支持加入购物车/收藏。 |
+| **我的收藏** | <img src="./readme_png/show_favorite.png" width="800" /> | 个人收藏夹管理。 |
+| **订单管理** | <img src="./readme_png/show_order.png" width="800" /> | 历史订单列表与状态追踪。 |
+| **模拟支付** | <img src="./readme_png/show_pay.png" width="800" /> | 购物车页面，模拟三方支付页面与二维码生成。 |
+
 ## 运行说明
 
 **前置条件**: 已安装 Docker 及 Docker Desktop。
@@ -39,6 +51,3 @@
 2.  **访问地址**:
     *   Web 页面: `http://localhost:8080`
     *   API 接口: `http://localhost:8080/api/v1/...`
-
-## 许可证
-MIT License
