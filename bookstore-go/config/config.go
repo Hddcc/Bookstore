@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,10 +26,19 @@ type RedisConfig struct {
 	DB       int    `yaml:"db"`
 }
 
+type RabbitMQConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	VHost    string `yaml:"vhost"`
+}
+
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 	Redis    RedisConfig    `yaml:"redis"`
+	RabbitMQ RabbitMQConfig `yaml:"rabbitmq"`
 }
 
 var AppConfig Config
