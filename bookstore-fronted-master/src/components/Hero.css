@@ -138,6 +138,7 @@
   border-radius: 50%;
   font-size: 28px;
   cursor: pointer;
+  opacity: 0;
   transition: all 0.3s ease;
   backdrop-filter: blur(15px);
   z-index: 10;
@@ -146,11 +147,16 @@
   justify-content: center;
 }
 
+.hero-container:hover .hero-nav {
+  opacity: 1;
+}
+
 .hero-nav:hover {
   background: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.6);
   transform: translateY(-50%) scale(1.1);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  opacity: 1 !important;
 }
 
 .hero-nav.prev {
@@ -307,3 +313,5 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 } 
+
+

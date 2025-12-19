@@ -64,8 +64,8 @@ const BookDetailPage = () => {
 
   const handleBuyNow = () => {
     if (book && book.stock > 0) {
-      // 清空购物车，只添加当前书籍
-      clearCart();
+      // // 清空购物车，只添加当前书籍
+      // clearCart();
       
       // 添加商品到购物车
       addToCart({

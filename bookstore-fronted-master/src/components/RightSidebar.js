@@ -1,5 +1,6 @@
 import React from 'react';
 import './RightSidebar.css';
+import { Link } from 'react-router-dom';
 
 const RightSidebar = ({ hotBooks = [], newBooks = [] }) => {
   return (
@@ -12,7 +13,7 @@ const RightSidebar = ({ hotBooks = [], newBooks = [] }) => {
         </div>
         <div className="hot-books-list">
           {hotBooks.map((book, index) => (
-            <div key={book.id} className="hot-book-item">
+               <Link to={`/book/${book.id}`} key={book.id} className="hot-book-item" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="rank-badge">
                 <span className="rank-number">{index + 1}</span>
                 {index < 3 && <div className="crown-icon">👑</div>}
@@ -28,7 +29,7 @@ const RightSidebar = ({ hotBooks = [], newBooks = [] }) => {
               <div className="book-cover">
                 <img src={book.cover_url || 'https://via.placeholder.com/40x50/ff6b6b/ffffff?text=📚'} alt={book.title} />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -41,7 +42,7 @@ const RightSidebar = ({ hotBooks = [], newBooks = [] }) => {
         </div>
         <div className="new-books-list">
           {newBooks.map((book, index) => (
-            <div key={book.id} className="new-book-item">
+            <Link to={`/book/${book.id}`} key={book.id} className="new-book-item" style={{ textDecoration: 'none', color: 'inherit' }}>
               <div className="rank-badge new">
                 <span className="rank-number">{index + 1}</span>
                 <div className="new-badge">NEW</div>
@@ -57,7 +58,7 @@ const RightSidebar = ({ hotBooks = [], newBooks = [] }) => {
               <div className="book-cover">
                 <img src={book.cover_url || 'https://via.placeholder.com/40x50/4ecdc4/ffffff?text=📚'} alt={book.title} />
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

@@ -16,9 +16,9 @@ const CategoryButtons = () => {
         const categoryList = data.data.map(category => ({
           name: category.name,
           count: category.book_count,
-          icon: category.icon,
-          color: category.color,
-          gradient: category.gradient
+          icon: getCategoryIcon(category.name),
+          color: getCategoryColor(category.name),
+          gradient: getCategoryGradient(category.name)
         }));
         
         setCategories(categoryList);

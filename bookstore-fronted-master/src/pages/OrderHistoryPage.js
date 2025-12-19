@@ -13,7 +13,7 @@ const OrderHistoryPage = () => {
   useEffect(() => {
     console.log('OrderHistoryPage: useEffect triggered');
     console.log('User:', user);
-    
+
     if (!user) {
       console.log('OrderHistoryPage: No user, redirecting to home');
       navigate('/');
@@ -29,7 +29,7 @@ const OrderHistoryPage = () => {
       console.log('OrderHistoryPage: Starting fetchOrders');
       const token = localStorage.getItem('token');
       console.log('OrderHistoryPage: Token exists:', !!token);
-      
+
       const response = await fetch('http://localhost:8080/api/v1/order/list', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -39,11 +39,11 @@ const OrderHistoryPage = () => {
       console.log('OrderHistoryPage: Response status:', response.status);
       const data = await response.json();
       console.log('OrderHistoryPage: Response data:', data);
-      
+
       if (data.code === 0) {
         console.log('OrderHistoryPage: API success, data.data type:', typeof data.data);
         console.log('OrderHistoryPage: data.data:', data.data);
-        
+
         // 处理后端返回的数据格式
         let ordersArray = [];
         if (data.data && data.data.orders) {
@@ -53,7 +53,7 @@ const OrderHistoryPage = () => {
           // 后端直接返回数组格式
           ordersArray = data.data;
         }
-        
+
         setOrders(ordersArray);
         console.log('OrderHistoryPage: Orders set:', ordersArray.length);
       } else {
@@ -68,6 +68,34 @@ const OrderHistoryPage = () => {
       console.log('OrderHistoryPage: Loading set to false');
     }
   };
+
+  // [新增] 取消订单处理函数
+  const handleCancelOrder = async (orderId) => {
+    // 弹窗确认
+    if (!window.confirm('确认要取消该订单吗？')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      // 调用后端 API
+      const response = await fetch(`http://localhost:8080/api/v1/order/${orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+
+      if (data.code === 0) {
+        alert('订单已取消');
+        // 重新获取列表以更新状态
+        fetchOrders();
+      } else {
+        alert(data.message || '取消失败');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('网络错误');
+    }
+  };
+
 
   const getStatusText = (status) => {
     const statusMap = {
@@ -128,7 +156,7 @@ const OrderHistoryPage = () => {
             <div className="empty-icon">📦</div>
             <h3>暂无订单</h3>
             <p>您还没有任何订单记录</p>
-            <button 
+            <button
               className="browse-books-btn"
               onClick={() => navigate('/')}
             >
@@ -146,7 +174,7 @@ const OrderHistoryPage = () => {
                       <h3>订单号: {order.order_no}</h3>
                       <p className="order-date">下单时间: {formatDate(order.created_at)}</p>
                     </div>
-                    <div 
+                    <div
                       className="order-status"
                       style={{ backgroundColor: statusInfo.color }}
                     >
@@ -158,8 +186,8 @@ const OrderHistoryPage = () => {
                     {order.order_items && order.order_items.map((item) => (
                       <div key={item.id} className="order-item">
                         <div className="item-image">
-                          <img 
-                            src={item.book?.cover_url || 'https://via.placeholder.com/60x80/4A90E2/FFFFFF?text=📚'} 
+                          <img
+                            src={item.book?.cover_url || 'https://via.placeholder.com/60x80/4A90E2/FFFFFF?text=📚'}
                             alt={item.book?.title}
                           />
                         </div>
@@ -181,6 +209,52 @@ const OrderHistoryPage = () => {
                       <span>总计: </span>
                       <span className="total-price">¥{formatPrice(order.total_amount)}</span>
                     </div>
+
+                    {/* [新增] 按钮组：包含取消订单和去支付 */}
+                    {order.status == 0 && (
+                      <div className="action-buttons" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          className="cancel-btn"
+                          style={{
+                            padding: '8px 20px',  // 统一内边距
+                            fontSize: '14px',     // 统一字体
+                            height: '36px',       // 统一高度
+                            backgroundColor: '#95a5a6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onClick={() => handleCancelOrder(order.id)}
+                        >
+                          取消订单
+                        </button>
+
+                        <button
+                          className="pay-now-btn"
+                          style={{
+                            padding: '8px 20px',  // 统一内边距
+                            fontSize: '14px',     // 统一字体
+                            height: '36px',       // 统一高度
+                            backgroundColor: '#FF6B6B',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onClick={() => navigate(`/payment/${order.id}`)}
+                        >
+                          去支付
+                        </button>
+                      </div>
+                    )}
+
                     {order.is_paid && order.payment_time && (
                       <p className="payment-time">
                         支付时间: {formatDate(order.payment_time)}
