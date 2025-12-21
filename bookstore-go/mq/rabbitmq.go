@@ -28,6 +28,27 @@ func InitRabbitMQ() {
 		log.Fatalf("RabbitMQ 打开通道失败: %v", err)
 	}
 
+	// 1. 声明死信交换机 (DLX)
+	// 名字叫 "dlx_exchange", 类型 "topic"
+	err = Channel.ExchangeDeclare("dlx_exchange", "topic", true, false, false, false, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 2. 声明死信队列 (DLQ)
+	// 名字叫 "dlq_queue"
+	_, err = Channel.QueueDeclare("dlq_queue", true, false, false, false, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 3. 绑定 DLQ 到 DLX
+	// RoutingKey set to "#" (接盘所有被遗弃的消息)
+	err = Channel.QueueBind("dlq_queue", "#", "dlx_exchange", false, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// 声明一个常用的交换机 (Exchange)，例如 'bookstore_event_exchange'
 	Channel.ExchangeDeclare(
 		"bookstore_event_exchange", // 参数1: 交换机名称
@@ -66,13 +87,18 @@ func SendMessage(routingKey string, message string) error {
 
 // StartConsumer 监听指定 routing key 的消息
 func StartConsumer(routingKey string, handler func(string, amqp.Delivery)) {
+	// 配置队列参数，绑定死信
+	args := amqp.Table{
+		// 假如这个队列里的消息死了，发送到 dlx_exchange
+		"x-dead-letter-exchange": "dlx_exchange",
+	}
 	q, err := Channel.QueueDeclare(
-		"",    // 队列名称，留空由 RabbitMQ 自动生成临时队列
-		false, // durable
+		"order_seckill_queue",    // 队列名称
+		true, // durable
 		false, // delete when unused
-		true,  // exclusive
+		false,  // exclusive
 		false, // no-wait
-		nil,   // arguments
+		args,   // arguments
 	)
 	if err != nil {
 		log.Println("声明队列失败:", err)

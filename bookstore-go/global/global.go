@@ -59,7 +59,7 @@ func GetDB() *gorm.DB {
 func CloseDB() {
 	if DBClient != nil {
 		sqlDB, err := DBClient.DB()
-		if err != nil {
+		if err == nil {
 			sqlDB.Close()
 		}
 	}
