@@ -1,8 +1,7 @@
 # 使用官方 Go 镜像作为构建环境
-# 注意：你的 go.mod 指定了 go 1.24.2，所以这里必须用最新的 go 镜像，否则会报错
 FROM golang:alpine AS builder
 
-# [新增] 设置 Go Proxy 解决国内下载依赖失败/超时的问题
+# 设置 Go Proxy 解决国内下载依赖失败/超时的问题
 ENV GOPROXY=https://goproxy.cn,direct
 
 # 设置容器内的工作目录
@@ -29,10 +28,9 @@ WORKDIR /app
 
 # 从构建阶段复制编译好的程序
 COPY --from=builder /app/bookstore-app .
-# 复制配置文件 (确保 conf 目录在 bookstore-go 下存在)
+# 复制配置文件
 COPY --from=builder /app/conf ./conf
-# [新增] 复制静态资源 (解决浏览器访问 404 的问题)
-# 假设你的 index.html 和 css/js 都在 bookstore-go/static 目录下
+# 复制静态资源
 COPY --from=builder /app/static ./static
 
 # 暴露端口
