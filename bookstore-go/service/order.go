@@ -1,9 +1,11 @@
 package service
 
 import (
+	"bookstore-manager/global"
 	"bookstore-manager/model"
 	"bookstore-manager/mq"
 	"bookstore-manager/repository"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -164,10 +166,34 @@ func (o *OrderService) CancelOrder(userID, orderID int) error {
 
 // CreateOrderAsync 秒杀生成订单
 func (o *OrderService) CreateOrderAsync(req *OrderRequest) (string, error) {
-	// 1.生成订单号
+	if len(req.Items) == 0 {
+		return "", errors.New("订单项不能为空")
+	}
+	// 1. Redis 预扣减
+	// 假设秒杀场景一次只买一种书 (Items[0])
+	targetBookID := req.Items[0].BookID
+	buyNum := req.Items[0].Quantity
+
+	stockKey := fmt.Sprintf("stock:%d", targetBookID)
+	// DecrBy 是原子操作，并发安全，不会超卖
+	// 返回值 result 是扣减后的剩余库存
+	result, err := global.RedisClient.DecrBy(context.Background(), stockKey, int64(buyNum)).Result()
+	if err != nil {
+		// 如果 Redis 挂了或者 Key 不存在，建议降级（报错或直接走DB）
+		return "", errors.New("系统繁忙 (Redis Error)")
+	}
+
+	if result < 0 {
+		// 扣减后小于 0，说明库存不足
+		// [回滚] 把它加回去 (虽然已经是负数了，加回去不影响逻辑，主要是为了计数准确)
+		global.RedisClient.IncrBy(context.Background(), stockKey, int64(buyNum))
+		return "", errors.New("库存不足，被抢光啦！")
+	}
+
+	// 2.生成订单号
 	orderNo := o.GenerateOrderNo()
 
-	// 2.组装消息并发送
+	// 3.组装消息并发送
 	msgObj := OrderMessage{
 		UserID:     req.UserID,
 		OrderNo:    orderNo,
@@ -180,7 +206,7 @@ func (o *OrderService) CreateOrderAsync(req *OrderRequest) (string, error) {
 
 	// 发送到rabbitmq的“order.seckill”队列
 	// RoutingKey 改成 “order.seckill”是为了和普通订单区分开
-	err := mq.SendMessage("order.seckill", string(msgBytes))
+	err = mq.SendMessage("order.seckill", string(msgBytes))
 	if err != nil {
 		return "", errors.New("系统繁忙，请稍后再试")
 	}
