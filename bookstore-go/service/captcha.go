@@ -4,10 +4,10 @@ import (
 	"bookstore-manager/global"
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/mojocn/base64Captcha"
+	"go.uber.org/zap"
 )
 
 type CaptchaService struct {
@@ -40,7 +40,7 @@ func (c *CaptchaService) GenerateCaptcha() (*CaptchaResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("图片验证码真实answer:", answer)
+	global.Logger.Info("图片验证码真实answer", zap.String("answer", answer))
 
 	//用到redis,作用是存储有效期的图片验证码
 	redisKey := fmt.Sprintf("captcha:%s", id)

@@ -1,9 +1,13 @@
 package repository
 
 import (
+	"context"
+	"strconv"
+
 	"bookstore-manager/global"
 	"bookstore-manager/model"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -19,22 +23,76 @@ func NewBookDAO() *BookDAO {
 	}
 }
 
+// GetHotBooks 查看热销书籍 (Redis ZSet)
 func (b *BookDAO) GetHotBooks(limit int) ([]*model.Book, error) {
-	var books []*model.Book
-	err := b.db.Debug().Where("status = ?", 1).Order("sale DESC").Limit(limit).Find(&books).Error
+	// 1. 从 Redis 取出前 limit 名的 ID
+	// ZREVRANGE rank:hot_books 0 limit-1
+	idsStr, err := global.RedisClient.ZRevRange(context.Background(), "rank:hot_books", 0, int64(limit-1)).Result()
 	if err != nil {
+		global.Logger.Error("获取热销榜失败(Redis)", zap.Error(err))
 		return nil, err
 	}
-	return books, nil
+
+	if len(idsStr) == 0 {
+		return []*model.Book{}, nil
+	}
+
+	// 2. 根据 ID 去 MySQL 查详情
+	var books []*model.Book
+	if err := b.db.Debug().Where("id IN ?", idsStr).Find(&books).Error; err != nil {
+		return nil, err
+	}
+
+	// 3. 按照 Redis 的 ID 顺序手动排序 (MySQL IN 查询不保证顺序)
+	bookMap := make(map[string]*model.Book)
+	for _, book := range books {
+		bookMap[strconv.FormatInt(book.ID, 10)] = book
+	}
+
+	var sortedBooks []*model.Book
+	for _, idStr := range idsStr {
+		if book, ok := bookMap[idStr]; ok {
+			sortedBooks = append(sortedBooks, book)
+		}
+	}
+
+	return sortedBooks, nil
 }
 
+// GetNewBooks 新书上市 (Redis ZSet)
 func (b *BookDAO) GetNewBooks(limit int) ([]*model.Book, error) {
-	var books []*model.Book
-	err := b.db.Debug().Where("status = ?", 1).Order("created_at DESC").Limit(limit).Find(&books).Error
+	// 1. 从 Redis 取出前 limit 名的 ID
+	// ZREVRANGE rank:new_books 0 limit-1
+	idsStr, err := global.RedisClient.ZRevRange(context.Background(), "rank:new_books", 0, int64(limit-1)).Result()
 	if err != nil {
+		global.Logger.Error("获取新书榜失败(Redis)", zap.Error(err))
 		return nil, err
 	}
-	return books, nil
+
+	if len(idsStr) == 0 {
+		return []*model.Book{}, nil
+	}
+
+	// 2. 根据 ID 去 MySQL 查详情
+	var books []*model.Book
+	if err := b.db.Debug().Where("id IN ?", idsStr).Find(&books).Error; err != nil {
+		return nil, err
+	}
+
+	// 3. 排序
+	bookMap := make(map[string]*model.Book)
+	for _, book := range books {
+		bookMap[strconv.FormatInt(book.ID, 10)] = book
+	}
+
+	var sortedBooks []*model.Book
+	for _, idStr := range idsStr {
+		if book, ok := bookMap[idStr]; ok {
+			sortedBooks = append(sortedBooks, book)
+		}
+	}
+
+	return sortedBooks, nil
 }
 
 func (b *BookDAO) GetBooksByPage(page, pageSize int) ([]*model.Book, int64, error) {
@@ -70,7 +128,7 @@ func (b *BookDAO) SearchBooksWithPage(keyword string, page, pageSize int) ([]*mo
 	return books, total, err
 }
 
-func (b *BookDAO) GetBooksByID(id int) (*model.Book, error) {
+func (b *BookDAO) GetBooksByID(id int64) (*model.Book, error) {
 	var books model.Book
 	err := b.db.Debug().Where("status = ?", 1).First(&books, id).Error
 	if err != nil {
