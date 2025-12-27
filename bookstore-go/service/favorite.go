@@ -13,15 +13,15 @@ func NewFavoriteService(favoriteDAO *repository.FavoriteDAO) *FavoriteService {
 	return &FavoriteService{favoriteDAO: favoriteDAO}
 }
 
-func (f *FavoriteService) AddFavorite(userID, bookID int) error {
+func (f *FavoriteService) AddFavorite(userID, bookID int64) error {
 	return f.favoriteDAO.AddFavorite(userID, bookID)
 }
 
-func (f *FavoriteService) RemoveFavorite(userID, bookID int) error {
+func (f *FavoriteService) RemoveFavorite(userID, bookID int64) error {
 	return f.favoriteDAO.RemoveFavorite(userID, bookID)
 }
 
-func (f *FavoriteService) GetUserFavorites(userID int, page, pageSize int, timeFilter string) ([]*model.Favorite, int64, error) {
+func (f *FavoriteService) GetUserFavorites(userID int64, page, pageSize int, timeFilter string) ([]*model.Favorite, int64, error) {
 	fav, err := f.favoriteDAO.GetUserFavorite(userID)
 	if err != nil {
 		return nil, 0, err
@@ -39,10 +39,10 @@ func (f *FavoriteService) GetUserFavorites(userID int, page, pageSize int, timeF
 	return fav[start:end], total, nil
 }
 
-func (f *FavoriteService)GetUserFavoriteCount(userID int)(int64,error){
+func (f *FavoriteService) GetUserFavoriteCount(userID int64) (int64, error) {
 	return f.favoriteDAO.GetUserFavoriteCount(userID)
 }
 
-func (f *FavoriteService) IsFavorited(userID,bookID int)(bool,error){
-	return f.favoriteDAO.CheckFavorite(userID,bookID)
+func (f *FavoriteService) IsFavorited(userID, bookID int64) (bool, error) {
+	return f.favoriteDAO.CheckFavorite(userID, bookID)
 }

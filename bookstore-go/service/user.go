@@ -29,7 +29,7 @@ type LoginResponse struct {
 }
 
 type UserInfo struct {
-	ID       int    `json:"id"`
+	ID       int64  `json:"id"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`
@@ -108,7 +108,7 @@ func (u *UserService) createUser(username, password, phone, email string) error 
 	return u.UserDB.CreateUser(user)
 }
 
-func (u *UserService) GetUserByID(userID int) (*model.User, error) {
+func (u *UserService) GetUserByID(userID int64) (*model.User, error) {
 	user, err := u.UserDB.GetUserByID(userID)
 	if err != nil {
 		return nil, errors.New("用户不存在")
@@ -133,7 +133,7 @@ func (u *UserService) UpdateUserInfo(user *model.User) error {
 	return nil
 }
 
-func (u *UserService) ChangePassword(userID int, oldPassword, newPassword string) error {
+func (u *UserService) ChangePassword(userID int64, oldPassword, newPassword string) error {
 	// 1.获取对应用户
 	user, err := u.UserDB.GetUserByID(userID)
 	if err != nil {

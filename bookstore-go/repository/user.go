@@ -64,7 +64,7 @@ func (u *UserDAO) GetUserByUsername(username string) (*model.User, error) {
 	return user, nil
 }
 
-func (u *UserDAO) GetUserByID(id int) (*model.User, error) {
+func (u *UserDAO) GetUserByID(id int64) (*model.User, error) {
 	var user model.User
 	err := u.db.Debug().First(&user, id).Error
 	if err != nil {

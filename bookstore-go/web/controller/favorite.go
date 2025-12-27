@@ -18,15 +18,28 @@ func NewFavoriteController(favoriteService *service.FavoriteService) *FavoriteCo
 	}
 }
 
-func getUserID(ctx *gin.Context) int {
+// [修改] 返回值改为 int64，从中间件获取的 userID 如果是 float64 需要转化
+func getUserID(ctx *gin.Context) int64 {
 	userID, exists := ctx.Get("userID")
 	if !exists {
 		return 0
 	}
-	return userID.(int)
+	// 注意：JWT 解析出来的数字可能是 float64，也可能是 int/int64，视具体实现而定
+	// 这里做一个类型断言的安全处理
+	switch v := userID.(type) {
+	case int:
+		return int64(v)
+	case int64:
+		return v
+	case float64:
+		return int64(v)
+	case uint:
+		return int64(v)
+	default:
+		return 0
+	}
 }
 
-// 添加收藏
 func (f *FavoriteController) AddFavorite(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
@@ -36,7 +49,8 @@ func (f *FavoriteController) AddFavorite(ctx *gin.Context) {
 		})
 		return
 	}
-	bookID, err := strconv.Atoi(ctx.Param("id"))
+	// [修改] strconv.Atoi -> strconv.ParseInt
+	bookID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":    -1,
@@ -59,7 +73,6 @@ func (f *FavoriteController) AddFavorite(ctx *gin.Context) {
 	})
 }
 
-// 删除收藏
 func (f *FavoriteController) RemoveFavorite(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
@@ -69,7 +82,8 @@ func (f *FavoriteController) RemoveFavorite(ctx *gin.Context) {
 		})
 		return
 	}
-	bookID, err := strconv.Atoi(ctx.Param("id"))
+	// [修改] strconv.Atoi -> strconv.ParseInt
+	bookID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":    -1,
@@ -92,7 +106,6 @@ func (f *FavoriteController) RemoveFavorite(ctx *gin.Context) {
 	})
 }
 
-// 获取用户收藏列表
 func (f *FavoriteController) GetUserFavorites(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
@@ -126,7 +139,6 @@ func (f *FavoriteController) GetUserFavorites(ctx *gin.Context) {
 	})
 }
 
-// 获取用户收藏总数
 func (f *FavoriteController) GetUserFavoriteCount(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
@@ -153,7 +165,6 @@ func (f *FavoriteController) GetUserFavoriteCount(ctx *gin.Context) {
 	})
 }
 
-// 是否为收藏书籍
 func (f *FavoriteController) CheckFavorite(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
@@ -164,7 +175,8 @@ func (f *FavoriteController) CheckFavorite(ctx *gin.Context) {
 		return
 	}
 	bookIDStr := ctx.Param("id")
-	bookID, err := strconv.Atoi(bookIDStr)
+	// [修改] strconv.Atoi -> strconv.ParseInt
+	bookID, err := strconv.ParseInt(bookIDStr, 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":    -1,

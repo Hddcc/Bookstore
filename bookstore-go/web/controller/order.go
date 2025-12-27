@@ -37,7 +37,20 @@ func (o *OrderController) CreateOrder(ctx *gin.Context) {
 		})
 		return
 	}
-	req.UserID = userID.(int)
+	// Fix: assert to int64 or cast
+	switch v := userID.(type) {
+	case int:
+		req.UserID = int64(v)
+	case int64:
+		req.UserID = v
+	case float64:
+		req.UserID = int64(v)
+	case uint:
+		req.UserID = int64(v)
+	default:
+		req.UserID = 0
+	}
+
 	order, err := o.OrderService.CreateOrder(&req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -67,7 +80,20 @@ func (o *OrderController) GetUserOrders(ctx *gin.Context) {
 		})
 		return
 	}
-	orders, total, err := o.OrderService.GetUserOrders(userID.(int), page, pageSize)
+
+	var uid int64
+	switch v := userID.(type) {
+	case int:
+		uid = int64(v)
+	case int64:
+		uid = v
+	case float64:
+		uid = int64(v)
+	case uint:
+		uid = int64(v)
+	}
+
+	orders, total, err := o.OrderService.GetUserOrders(uid, page, pageSize)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"code":    -1,
@@ -91,7 +117,7 @@ func (o *OrderController) GetUserOrders(ctx *gin.Context) {
 
 // PayOrder 支付
 func (o *OrderController) PayOrder(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"code":    -1,
@@ -117,7 +143,7 @@ func (o *OrderController) PayOrder(ctx *gin.Context) {
 // GetOrderDetail 获取订单详情接口
 func (o *OrderController) GetOrderDetail(ctx *gin.Context) {
 	idstr := ctx.Param("id")
-	orderID, _ := strconv.Atoi(idstr)
+	orderID, _ := strconv.ParseInt(idstr, 10, 64)
 
 	order, err := o.OrderService.GetOrder(orderID)
 	if err != nil {
@@ -138,11 +164,24 @@ func (o *OrderController) GetOrderDetail(ctx *gin.Context) {
 func (o OrderController) CancelOrder(ctx *gin.Context) {
 	// 获取路径参数 /order/:id/cancel
 	idStr := ctx.Param("id")
-	orderID, _ := strconv.Atoi(idStr)
+	orderID, _ := strconv.ParseInt(idStr, 10, 64)
 
 	// 获取当前用户id
 	userID, _ := ctx.Get("userID")
-	err := o.OrderService.CancelOrder(userID.(int), orderID)
+
+	var uid int64
+	switch v := userID.(type) {
+	case int:
+		uid = int64(v)
+	case int64:
+		uid = v
+	case float64:
+		uid = int64(v)
+	case uint:
+		uid = int64(v)
+	}
+
+	err := o.OrderService.CancelOrder(uid, orderID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"code":    -1,

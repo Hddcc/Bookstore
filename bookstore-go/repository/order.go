@@ -36,7 +36,7 @@ func (o *OrderDAO) CreateOrderWithItems(order *model.Order, items []*model.Order
 	return err
 }
 
-func (o *OrderDAO) GetUserOrders(userID, page, pageSize int) ([]*model.Order, int64, error) {
+func (o *OrderDAO) GetUserOrders(userID int64, page, pageSize int) ([]*model.Order, int64, error) {
 	var orders []*model.Order
 	var total int64
 
@@ -82,7 +82,7 @@ func (o *OrderDAO) UpdateOrderStatus(order *model.Order) error {
 		for _, item := range order.OrderItems {
 			if err := tx.Model(&model.Book{}).Where("id = ?", item.BookID).Updates(map[string]interface{}{
 				"stock": gorm.Expr("stock - ?", item.Quantity),
-				"sale":  gorm.Expr("sale = ?", item.Quantity),
+				"sale":  gorm.Expr("sale + ?", item.Quantity),
 			}).Error; err != nil {
 				return err
 			}
@@ -95,7 +95,7 @@ func (o *OrderDAO) UpdateOrderStatus(order *model.Order) error {
 	return nil
 }
 
-func (o *OrderDAO) GetOrderByID(id int) (*model.Order, error) {
+func (o *OrderDAO) GetOrderByID(id int64) (*model.Order, error) {
 	var order model.Order
 	err := o.db.Debug().Preload("OrderItems.Book").First(&order, id).Error
 	if err != nil {
@@ -105,6 +105,6 @@ func (o *OrderDAO) GetOrderByID(id int) (*model.Order, error) {
 }
 
 // CancelOrder 取消订单（状态设置为2）
-func (o *OrderDAO) CancelOrder(orderID int) error {
+func (o *OrderDAO) CancelOrder(orderID int64) error {
 	return o.db.Model(&model.Order{}).Where("id = ?", orderID).Update("status", 2).Error
 }

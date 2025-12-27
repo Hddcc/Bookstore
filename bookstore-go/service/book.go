@@ -37,7 +37,7 @@ func (b *BookService) SearchBooksWithPage(keyword string, page, pageSize int) ([
 	return b.BookDB.SearchBooksWithPage(keyword, page, pageSize)
 }
 
-func (b *BookService) GetBooksByID(id int) (*model.Book, error) {
+func (b *BookService) GetBooksByID(id int64) (*model.Book, error) {
 	// 1. 定义缓存 Key
 	cacheKey := fmt.Sprintf("book:detail:%d", id)
 

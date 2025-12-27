@@ -128,7 +128,20 @@ func (u *UserController) GetUserProfile(ctx *gin.Context) {
 		})
 		return
 	}
-	user, err := u.UserService.GetUserByID(userID.(int))
+
+	var uid int64
+	switch v := userID.(type) {
+	case int:
+		uid = int64(v)
+	case int64:
+		uid = v
+	case float64:
+		uid = int64(v)
+	case uint:
+		uid = int64(v)
+	}
+
+	user, err := u.UserService.GetUserByID(uid)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"code":    -1,
@@ -177,13 +190,25 @@ func (u *UserController) UpdateUserProfile(ctx *gin.Context) {
 		return
 	}
 
+	var uid int64
+	switch v := userID.(type) {
+	case int:
+		uid = int64(v)
+	case int64:
+		uid = v
+	case float64:
+		uid = int64(v)
+	case uint:
+		uid = int64(v)
+	}
+
 	user := &model.User{
-		ID:       userID.(int),
 		Username: updateData.Username,
 		Email:    updateData.Email,
 		Phone:    updateData.Phone,
 		Avatar:   updateData.Avatar,
 	}
+	user.ID = uid // ID is embedded in BaseModel, so we set it here
 	err := u.UserService.UpdateUserInfo(user)
 	if err != nil {
 		ctx.JSON(500, gin.H{
@@ -194,7 +219,7 @@ func (u *UserController) UpdateUserProfile(ctx *gin.Context) {
 		return
 	}
 
-	updatedUser, err := u.UserService.GetUserByID(userID.(int))
+	updatedUser, err := u.UserService.GetUserByID(uid)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"code":    -1,
@@ -238,7 +263,20 @@ func (u *UserController) ChangePassword(ctx *gin.Context) {
 		})
 		return
 	}
-	err := u.UserService.ChangePassword(userID.(int), passwordData.OldPassword, passwordData.NewPassword)
+
+	var uid int64
+	switch v := userID.(type) {
+	case int:
+		uid = int64(v)
+	case int64:
+		uid = v
+	case float64:
+		uid = int64(v)
+	case uint:
+		uid = int64(v)
+	}
+
+	err := u.UserService.ChangePassword(uid, passwordData.OldPassword, passwordData.NewPassword)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"code":  -1,
@@ -261,8 +299,21 @@ func (u *UserController) Logout(ctx *gin.Context) {
 		})
 		return
 	}
+
+	var uid uint
+	switch v := userID.(type) {
+	case int:
+		uid = uint(v)
+	case int64:
+		uid = uint(v)
+	case float64:
+		uid = uint(v)
+	case uint:
+		uid = v
+	}
+
 	//撤销用户token
-	err := jwt.RevokeToken(uint(userID.(int)))
+	err := jwt.RevokeToken(uid)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"code":    -1,

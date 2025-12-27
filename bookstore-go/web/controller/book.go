@@ -121,7 +121,7 @@ func (b *BookController) Searchbooks(ctx *gin.Context) {
 
 // GetBookDetail 获取图书细节
 func (b *BookController) GetBookDetail(ctx *gin.Context) {
-	id, err := strconv.Atoi(ctx.Param("id"))
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"code":    -1,
@@ -143,7 +143,6 @@ func (b *BookController) GetBookDetail(ctx *gin.Context) {
 		"data":    book,
 	})
 }
-
 
 // GetBooksByCategory 获取分类下的书籍列表
 func (b *BookController) GetBooksByCategory(ctx *gin.Context) {
