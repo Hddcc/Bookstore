@@ -5,9 +5,9 @@ import (
 	"bookstore-manager/model"
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -15,6 +15,7 @@ import (
 
 var DBClient *gorm.DB
 var RedisClient *redis.Client
+var Logger *zap.Logger
 
 func InitMysql() {
 	mysqlConfig := config.AppConfig.Database //用于读取配置
@@ -26,13 +27,13 @@ func InitMysql() {
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		log.Fatalln("连接数据库失败：", err)
+		Logger.Fatal("连接数据库失败：", zap.Error(err))
 	}
-	if err := client.AutoMigrate(&model.User{}); err != nil {
-		log.Fatalln("自动迁移表失败：", err)
+	if err := client.AutoMigrate(&model.User{}, &model.Book{}, &model.Category{}, &model.Order{}, &model.OrderItem{}, &model.Favorite{}); err != nil {
+		Logger.Fatal("自动迁移表失败：", zap.Error(err))
 	}
 	DBClient = client
-	log.Println("连接mysql成功")
+	Logger.Info("连接mysql成功")
 
 }
 
@@ -47,10 +48,10 @@ func InitRedis() {
 	RedisClient = client
 	str, err := client.Ping(context.TODO()).Result()
 	if err != nil {
-		log.Fatalln("redis连接失败：", err)
+		Logger.Fatal("redis连接失败：", zap.Error(err))
 	}
-	log.Println("str:", str)
-	log.Println("Redis连接成功")
+	Logger.Info("Redis连接检查", zap.String("pong", str))
+	Logger.Info("Redis连接成功")
 }
 
 func GetDB() *gorm.DB {
